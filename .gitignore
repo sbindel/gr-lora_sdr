@@ -1,1 +1,14 @@
+##git ignore
+#Declarations in this file will be ignored
+#ignore build direcotry
 build/
+#ignore test folder
+test/
+apps/profiling/
+### vscode ###
+.vscode/
+
+cmake-build-debug/
+
+##Pycharm
+.idea/
