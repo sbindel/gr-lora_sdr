@@ -6,7 +6,19 @@
 #
 # GNU Radio Python Flow Graph
 # Title: Tx Rx Simulation
-# GNU Radio version: 3.8.2.0
+# GNU Radio version: 3.9.4.0
+
+from distutils.version import StrictVersion
+
+if __name__ == '__main__':
+    import ctypes
+    import sys
+    if sys.platform.startswith('linux'):
+        try:
+            x11 = ctypes.cdll.LoadLibrary('libX11.so')
+            x11.XInitThreads()
+        except:
+            print("Warning: failed to XInitThreads()")
 
 from gnuradio import blocks
 import pmt
@@ -14,18 +26,51 @@ from gnuradio import channels
 from gnuradio.filter import firdes
 from gnuradio import filter
 from gnuradio import gr
+from gnuradio.fft import window
 import sys
 import signal
+from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 import lora_sdr
 
 
-class tx_rx_simulation(gr.top_block):
+
+from gnuradio import qtgui
+
+class tx_rx_simulation(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Tx Rx Simulation")
+        gr.top_block.__init__(self, "Tx Rx Simulation", catch_exceptions=True)
+        Qt.QWidget.__init__(self)
+        self.setWindowTitle("Tx Rx Simulation")
+        qtgui.util.check_set_qss()
+        try:
+            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
+        except:
+            pass
+        self.top_scroll_layout = Qt.QVBoxLayout()
+        self.setLayout(self.top_scroll_layout)
+        self.top_scroll = Qt.QScrollArea()
+        self.top_scroll.setFrameStyle(Qt.QFrame.NoFrame)
+        self.top_scroll_layout.addWidget(self.top_scroll)
+        self.top_scroll.setWidgetResizable(True)
+        self.top_widget = Qt.QWidget()
+        self.top_scroll.setWidget(self.top_widget)
+        self.top_layout = Qt.QVBoxLayout(self.top_widget)
+        self.top_grid_layout = Qt.QGridLayout()
+        self.top_layout.addLayout(self.top_grid_layout)
+
+        self.settings = Qt.QSettings("GNU Radio", "tx_rx_simulation")
+
+        try:
+            if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+                self.restoreGeometry(self.settings.value("geometry").toByteArray())
+            else:
+                self.restoreGeometry(self.settings.value("geometry"))
+        except:
+            pass
 
         ##################################################
         # Variables
@@ -37,7 +82,7 @@ class tx_rx_simulation(gr.top_block):
         self.impl_head = impl_head = False
         self.has_crc = has_crc = True
         self.frame_period = frame_period = 2000
-        self.cr = cr = 0
+        self.cr = cr = 1
 
         ##################################################
         # Blocks
@@ -69,6 +114,7 @@ class tx_rx_simulation(gr.top_block):
             noise_seed=0,
             block_tags=True)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_gr_complex*1, samp_rate*10,True)
+        self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_char*1)
         self.blocks_message_strobe_0_0 = blocks.message_strobe(pmt.intern("Hello world"), frame_period)
 
 
@@ -82,6 +128,7 @@ class tx_rx_simulation(gr.top_block):
         self.connect((self.channels_channel_model_0, 0), (self.interp_fir_filter_xxx_0, 0))
         self.connect((self.interp_fir_filter_xxx_0, 0), (self.lora_sdr_frame_sync_0, 0))
         self.connect((self.lora_sdr_add_crc_0, 0), (self.lora_sdr_hamming_enc_0, 0))
+        self.connect((self.lora_sdr_crc_verif_0, 0), (self.blocks_null_sink_0, 0))
         self.connect((self.lora_sdr_deinterleaver_0, 0), (self.lora_sdr_hamming_dec_0, 0))
         self.connect((self.lora_sdr_dewhitening_0, 0), (self.lora_sdr_crc_verif_0, 0))
         self.connect((self.lora_sdr_fft_demod_0, 0), (self.lora_sdr_gray_enc_0, 0))
@@ -96,6 +143,14 @@ class tx_rx_simulation(gr.top_block):
         self.connect((self.lora_sdr_modulate_0, 0), (self.blocks_throttle_0, 0))
         self.connect((self.lora_sdr_whitening_0, 0), (self.lora_sdr_header_0, 0))
 
+
+    def closeEvent(self, event):
+        self.settings = Qt.QSettings("GNU Radio", "tx_rx_simulation")
+        self.settings.setValue("geometry", self.saveGeometry())
+        self.stop()
+        self.wait()
+
+        event.accept()
 
     def get_bw(self):
         return self.bw
@@ -152,28 +207,33 @@ class tx_rx_simulation(gr.top_block):
 
 
 
-
 def main(top_block_cls=tx_rx_simulation, options=None):
+
+    if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
+        style = gr.prefs().get_string('qtgui', 'style', 'raster')
+        Qt.QApplication.setGraphicsSystem(style)
+    qapp = Qt.QApplication(sys.argv)
+
     tb = top_block_cls()
+
+    tb.start()
+
+    tb.show()
 
     def sig_handler(sig=None, frame=None):
         tb.stop()
         tb.wait()
 
-        sys.exit(0)
+        Qt.QApplication.quit()
 
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
-    tb.start()
+    timer = Qt.QTimer()
+    timer.start(500)
+    timer.timeout.connect(lambda: None)
 
-    try:
-        input('Press Enter to quit: ')
-    except EOFError:
-        pass
-    tb.stop()
-    tb.wait()
-
+    qapp.exec_()
 
 if __name__ == '__main__':
     main()
