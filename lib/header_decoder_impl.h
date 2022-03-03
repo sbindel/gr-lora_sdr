@@ -22,6 +22,8 @@ namespace gr {
         uint32_t pay_cnt;///< The number of payload nibbles received
         uint32_t nout;///< The number of data nibbles to output
         bool is_header ;///< Indicate that we need to decode the header
+        
+        bool m_log; ///< log information
 
         /**
          *  \brief  Reset the block variables for a new frame.
@@ -33,7 +35,7 @@ namespace gr {
         void publish_frame_info(int cr, int pay_len, int crc, int err);
 
      public:
-      header_decoder_impl(bool impl_head, uint8_t cr, uint32_t pay_len, bool has_crc);
+      header_decoder_impl(bool impl_head, uint8_t cr, uint32_t pay_len, bool has_crc, bool log = false);
       ~header_decoder_impl();
 
       void forecast (int noutput_items, gr_vector_int &ninput_items_required);

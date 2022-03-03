@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(header_decoder.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(ab99b1288c32a6fe4239031fc4e0c745)                     */
+/* BINDTOOL_HEADER_FILE_HASH(494e6575ebc432955c7c7a4f5d95a856)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -41,6 +41,7 @@ void bind_header_decoder(py::module& m)
            py::arg("cr"),
            py::arg("pay_len"),
            py::arg("has_crc"),
+           py::arg("log") = false,
            D(header_decoder,make)
         )
         
