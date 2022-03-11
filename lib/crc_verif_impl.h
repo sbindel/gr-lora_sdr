@@ -16,10 +16,36 @@ namespace lora_sdr {
 class crc_verif_impl : public crc_verif
 {
 private:
-    // Nothing to declare in this block.
+	/**
+	 * @brief Payload length in bytes
+	 */ 
+	uint8_t m_payload_len;
+
+	/**
+	 * @brief Indicate if a payload CRC is present
+	 */
+	bool m_has_crc;
+
+	/**
+	 * @brief The CRC computed from the payload
+	 */
+	uint16_t m_crc;
+
+	/**
+	 * @brief payload data
+	 */
+	std::vector<uint8_t> m_payload;
+
+	/**
+	 *  \brief  Calculate the CRC 16 using poly=0x1021 and Init=0x0000
+	 *
+	 *  \param  data : The pointer to the data beginning.
+	 *  \param  len : The length of the data in bytes.
+	 */
+	unsigned int crc16(const uint8_t* data, uint32_t len);
 
 public:
-    crc_verif_impl();
+	crc_verif_impl();
     ~crc_verif_impl();
 
     // Where all the action really happens
