@@ -90,7 +90,6 @@ namespace lora_sdr {
 		// extract data + crc
 		if ((ninput_items[0] >= (int)m_payload_len + 2) && m_has_crc)
 		{
-			std::cout<<"data + crc"<<std::endl;
 			if (m_payload_len < 2)
 			{
 				std::cout << "CRC not supported for payload smaller than 2 bytes"<< std::endl;
@@ -115,7 +114,6 @@ namespace lora_sdr {
 		// extract only data (without crc)
 		else if ((ninput_items[0] >= (int)m_payload_len) && !m_has_crc)
 		{
-			std::cout<<"only data"<<std::endl;
 			m_payload.clear();
 			for (int i = 0; i < m_payload_len; i++)
 			{
