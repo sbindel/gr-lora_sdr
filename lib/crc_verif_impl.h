@@ -37,6 +37,11 @@ private:
 	std::vector<uint8_t> m_payload;
 
 	/**
+	 * @brief indicate if information are logged 
+	 */
+	bool m_log; 
+
+	/**
 	 * \brief  Calculate the CRC 16 using poly=0x1021 and Init=0x0000
 	 *
 	 * \param unsigned int : the crc 
@@ -46,7 +51,7 @@ private:
 	unsigned int crc16(unsigned int crcValue, unsigned char newByte);
 
 public:
-	crc_verif_impl();
+	crc_verif_impl(bool log = false);
     ~crc_verif_impl();
 
     // Where all the action really happens

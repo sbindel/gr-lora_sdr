@@ -11,13 +11,18 @@
 namespace gr {
 namespace lora_sdr {
 
-	crc_verif::sptr crc_verif::make() { return gnuradio::make_block_sptr<crc_verif_impl>(); }
+	crc_verif::sptr crc_verif::make(bool log)
+	{
+		//return gnuradio::make_block_sptr<crc_verif_impl>();
+		return gnuradio::get_initial_sptr(new crc_verif_impl(log));
+	}
 
-	crc_verif_impl::crc_verif_impl()
+	crc_verif_impl::crc_verif_impl(bool log)
 		: gr::block("crc_verif",
 					gr::io_signature::make(1,1, sizeof(uint8_t)),
 					gr::io_signature::make(1, 1, sizeof(uint8_t)))
 	{
+		m_log = log;
 		set_tag_propagation_policy(TPP_DONT);
 	}
 
@@ -93,24 +98,31 @@ namespace lora_sdr {
 			{
                 uint16_t crc = 0x0000;
 				m_payload.clear();
-				std::cout<<"Received data : ";
+				if (m_log)
+					std::cout<<"Received data : ";
 				for (int i = 0; i < (unsigned int)m_payload_len + 1; i++)
 				{
 					if (i < (unsigned int) m_payload_len)
 					{
 						m_payload.push_back((char)in[i]);
-						std::cout<<(char)in[i];
+						if (m_log)
+							std::cout<<(char)in[i];
+
 						if (i < (unsigned int) m_payload_len -2)
 							crc=crc16(crc,(char)in[i]);
+
 						if (output_items.size())
 							out[i] = in[i];
 					}
 					else
 					{
-						std::cout<<std::endl;
-						std::cout<<" received crc : "<<std::hex<<(unsigned int)in[i+1]<<std::hex<<(unsigned int)in[i]<<std::endl;
-						crc = crc ^ in[m_payload_len - 1] ^ (in[m_payload_len - 2] << 8);
-						std::cout<<" computed crc : "<<std::hex<<(unsigned int)crc<<std::endl;
+						if (m_log)
+						{
+							std::cout<<std::endl;
+							std::cout<<"Received crc : "<<std::hex<<(unsigned int)in[i+1]<<std::hex<<(unsigned int)in[i]<<std::endl;
+							crc = crc ^ in[m_payload_len - 1] ^ (in[m_payload_len - 2] << 8);
+							std::cout<<"Computed crc : "<<std::hex<<(unsigned int)crc<<std::endl;
+						}
 					}
 				}
 				consume_each(m_payload_len+2);

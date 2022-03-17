@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(crc_verif.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(38dca0e8d31001751bcf5cf84a9c57c8)                     */
+/* BINDTOOL_HEADER_FILE_HASH(d3f7c86a0a47ffca77f6ab5cfda35476)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -37,6 +37,7 @@ void bind_crc_verif(py::module& m)
         std::shared_ptr<crc_verif>>(m, "crc_verif", D(crc_verif))
 
         .def(py::init(&crc_verif::make),
+           py::arg("log") = false,
            D(crc_verif,make)
         )
         

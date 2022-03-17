@@ -3,6 +3,14 @@ id: lora_sdr_crc_verif
 label: Crc verif
 category: '[LoRa_RX]'
 
+parameters:
+-   id: log
+    label: Log
+    dtype: bool
+    default: 'False'
+    options: ['True', 'False']
+    option_labels: [Enable, Disable]
+
 inputs:
 -   domain: stream
     dtype: byte
@@ -16,7 +24,7 @@ outputs:
     optional: true
 templates:
     imports: import lora_sdr
-    make: lora_sdr.crc_verif()
+    make: lora_sdr.crc_verif(${log})
 
 documentation: |-
     Calculate the CRC of the received data and compare it with the received CRC. It also print the received message in the terminal.

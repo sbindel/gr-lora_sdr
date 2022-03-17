@@ -32,7 +32,7 @@ public:
      * class. lora_sdr::crc_verif::make is the public interface for
      * creating new instances.
      */
-    static sptr make();
+    static sptr make(bool log = false);
 };
 
 } // namespace lora_sdr
