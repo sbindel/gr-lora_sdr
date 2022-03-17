@@ -29,24 +29,22 @@ namespace lora_sdr {
 		ninput_items_required[0] = 1;
 	}
 
-	unsigned int crc_verif_impl::crc16(const uint8_t* data, uint32_t len)
+	unsigned int crc_verif_impl::crc16(unsigned int crcValue, unsigned char newByte)
 	{
-		uint16_t crc = 0x0000;
-		for (unsigned int i = 0; i < len; i++) {
-			uint8_t newByte = data[i];
-			for (unsigned char i = 0; i < 8; i++)
+		unsigned char i;
+		for (i = 0; i < 8; i++)
+		{
+			if (((crcValue & 0x8000) >> 8) ^ (newByte & 0x80))
 			{
-				if (((crc & 0x8000) >> 8) ^ (newByte & 0x80))
-				{
-					crc = (crc << 1) ^ 0x1021;
-				} else
-				{
-					crc = (crc << 1);
-				}
-				newByte <<= 1;
+				crcValue = (crcValue << 1) ^ 0x1021;
 			}
+			else
+			{
+				crcValue = (crcValue << 1);
+			}
+			newByte <<= 1;
 		}
-		return crc;
+		return crcValue;
 	}
 	
 	int crc_verif_impl::general_work(int noutput_items,
@@ -85,9 +83,6 @@ namespace lora_sdr {
 				//std::cout<<"data +  :crc "<<tags[0].offset<<" - crc:"<<(int)m_has_crc<<" - pay_len: "<<(int)m_payload_len<<"\n";
 			}
 		}
-		
-		//std::cout<<ninput_items[0]<<std::endl;
-		// extract data + crc
 		if ((ninput_items[0] >= (int)m_payload_len + 2) && m_has_crc)
 		{
 			if (m_payload_len < 2)
@@ -96,22 +91,32 @@ namespace lora_sdr {
 			}
 			else
 			{
-				// crc part
-				m_crc = crc16(&in[0], m_payload_len - 2); // compute the CRC on the N-2 firsts data bytes
-				m_crc = m_crc ^ in[m_payload_len - 1] ^ (in[m_payload_len - 2] << 8); //  // XOR the obtained CRC with the last 2 data bytes
-
-				// payload part
+                uint16_t crc = 0x0000;
 				m_payload.clear();
-				for (int i = 0; i < (int)m_payload_len; i++) {
-					m_payload.push_back((char)in[i]);
-					if (output_items.size())
-						out[i] = in[i];
+				std::cout<<"Received data : ";
+				for (int i = 0; i < (unsigned int)m_payload_len + 1; i++)
+				{
+					if (i < (unsigned int) m_payload_len)
+					{
+						m_payload.push_back((char)in[i]);
+						std::cout<<(char)in[i];
+						if (i < (unsigned int) m_payload_len -2)
+							crc=crc16(crc,(char)in[i]);
+						if (output_items.size())
+							out[i] = in[i];
+					}
+					else
+					{
+						std::cout<<std::endl;
+						std::cout<<" received crc : "<<std::hex<<(unsigned int)in[i+1]<<std::hex<<(unsigned int)in[i]<<std::endl;
+						crc = crc ^ in[m_payload_len - 1] ^ (in[m_payload_len - 2] << 8);
+						std::cout<<" computed crc : "<<std::hex<<(unsigned int)crc<<std::endl;
+					}
 				}
 				consume_each(m_payload_len+2);
 				return_item = m_payload_len;
 			}
 		}
-		// extract only data (without crc)
 		else if ((ninput_items[0] >= (int)m_payload_len) && !m_has_crc)
 		{
 			m_payload.clear();

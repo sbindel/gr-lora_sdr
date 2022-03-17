@@ -37,12 +37,13 @@ private:
 	std::vector<uint8_t> m_payload;
 
 	/**
-	 *  \brief  Calculate the CRC 16 using poly=0x1021 and Init=0x0000
+	 * \brief  Calculate the CRC 16 using poly=0x1021 and Init=0x0000
 	 *
-	 *  \param  data : The pointer to the data beginning.
-	 *  \param  len : The length of the data in bytes.
+	 * \param unsigned int : the crc 
+	 * \param unsigned char : the data byte
+	 * \param unsigned int : the crc related to the data byte
 	 */
-	unsigned int crc16(const uint8_t* data, uint32_t len);
+	unsigned int crc16(unsigned int crcValue, unsigned char newByte);
 
 public:
 	crc_verif_impl();
